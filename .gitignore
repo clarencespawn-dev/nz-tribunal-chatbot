@@ -12,6 +12,7 @@ __pycache__/
 data/tribunal_data.json
 data/cleaned_data.json
 data/chunks.json
+data/legislation_chunks.json
 data/chroma_db/
 
 # API keys — never commit these
