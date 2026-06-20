@@ -6,11 +6,16 @@ using the Gemini API (free tier).
 
 Requires a GEMINI_API_KEY environment variable.
 Get a free key at: https://aistudio.google.com/apikey
+
+Uses the `google-genai` SDK (the `google-generativeai` package this
+originally used has been deprecated and no longer receives updates —
+see https://github.com/google-gemini/deprecated-generative-ai-python).
 """
 
 import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 GEMINI_MODEL = "gemini-2.5-flash"  # Free-tier model as of mid-2026
 
@@ -42,11 +47,8 @@ class AnswerGenerator:
                 "variable, or get a free key at https://aistudio.google.com/apikey"
             )
 
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL,
-            system_instruction=SYSTEM_PROMPT,
-        )
+        self.client = genai.Client(api_key=api_key)
+        self.config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
 
     def generate_answer(self, question: str, retrieved_chunks: list[dict]) -> str:
         """
@@ -79,5 +81,9 @@ User question: {question}
 
 Answer the question using only the context above."""
 
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=self.config,
+        )
         return response.text
