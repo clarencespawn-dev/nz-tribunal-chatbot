@@ -8,11 +8,10 @@ __pycache__/
 # Scrapy
 .scrapy/
 
-# Generated data files — run the pipeline locally to generate these
-data/tribunal_data.json
-data/cleaned_data.json
-data/chunks.json
-data/legislation_chunks.json
+# Generated data files — run the pipeline locally to generate these.
+# Everything in data/ is generated output except .gitkeep.
+data/*.json
+data/*.json.bak
 data/chroma_db/
 
 # API keys — never commit these
