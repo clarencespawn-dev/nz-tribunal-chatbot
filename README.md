@@ -103,7 +103,12 @@ nz-tribunal-chatbot/
 │   ├── ingest.py               # Embeds chunks.json into ChromaDB
 │   ├── retriever.py            # Semantic search over the vector store
 │   ├── generator.py            # Gemini-powered grounded answer generation
-│   └── app.py                  # Streamlit chat UI
+│   ├── app.py                  # Streamlit chat UI (quick prototyping)
+│   └── web/                    # Production-grade static web UI
+│       ├── index.html          #   Self-contained HTML/CSS/JS chat interface
+│       ├── config.js           #   Backend URL configuration
+│       ├── dev_server.py       #   Local FastAPI server for testing the UI
+│       └── API_CONTRACT.md     #   API spec the UI expects (local or Lambda)
 ├── data/                       # Generated outputs (gitignored)
 ├── docs/
 │   ├── scraping_guide.md       # Step-by-step scraping walkthrough
@@ -155,10 +160,22 @@ python scraper/merge_chunks.py \
 export GEMINI_API_KEY="your-key-here"   # Windows: set GEMINI_API_KEY=your-key-here
 ```
 
-**5. Embed and launch**
+**5. Embed, then launch a chat UI**
 ```bash
 python chatbot/ingest.py
+```
+
+Two interfaces are available:
+
+*Quick prototyping (Streamlit):*
+```bash
 streamlit run chatbot/app.py
+```
+
+*Production-grade static UI* — a dependency-free HTML/CSS/JS frontend, designed to be deployed as-is to S3 and call a Lambda Function URL (see `chatbot/web/API_CONTRACT.md`):
+```bash
+python chatbot/web/dev_server.py     # local API backend on :8000
+# then open chatbot/web/index.html directly in a browser
 ```
 
 ---

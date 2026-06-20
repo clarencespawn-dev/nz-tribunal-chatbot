@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ Tribunal Law Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1A2E22;
+    --paper: #F7F5F0;
+    --paper-raised: #FFFFFF;
+    --brass: #C9A961;
+    --brass-dim: #E4D6AC;
+    --citation: #8B2E2E;
+    --sage: #5A6B5D;
+    --line: #DEDACD;
+    --line-strong: #C7C2B0;
+    --shadow: 0 1px 2px rgba(26, 46, 34, 0.06), 0 4px 16px rgba(26, 46, 34, 0.04);
+    --radius: 3px;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    height: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  .letterhead {
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom: 3px solid var(--brass);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .seal {
+    width: 38px;
+    height: 38px;
+    border: 1.5px solid var(--brass);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--brass);
+    flex-shrink: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .letterhead-text h1 {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  .letterhead-text p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--brass-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.3px;
+  }
+
+  .letterhead-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--brass-dim);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6B9E78;
+    box-shadow: 0 0 0 3px rgba(107, 158, 120, 0.2);
+  }
+
+  .status-dot.offline { background: #B05C5C; box-shadow: 0 0 0 3px rgba(176, 92, 92, 0.2); }
+  .status-dot.thinking { background: var(--brass); box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.25); animation: pulse 1.4s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .app {
+    max-width: 880px;
+    margin: 0 auto;
+    min-height: calc(100vh - 73px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scroll-region {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 24px 12px;
+  }
+
+  .empty-state {
+    max-width: 560px;
+    margin: 40px auto;
+    text-align: center;
+  }
+
+  .empty-state .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--brass);
+    margin-bottom: 14px;
+  }
+
+  .empty-state h2 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 12px;
+  }
+
+  .empty-state p {
+    color: var(--sage);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 0 0 28px;
+  }
+
+  .prompt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .prompt-chip {
+    font-family: var(--sans);
+    font-size: 13px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+    text-align: left;
+  }
+
+  .prompt-chip:hover { border-color: var(--brass); }
+  .prompt-chip:active { transform: scale(0.98); }
+  .prompt-chip:focus-visible { outline: 2px solid var(--citation); outline-offset: 2px; }
+
+  .thread {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .msg { display: flex; flex-direction: column; max-width: 100%; }
+
+  .msg-user { align-items: flex-end; }
+  .msg-assistant { align-items: stretch; }
+
+  .msg-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+
+  .msg-user .msg-label { padding-right: 2px; }
+
+  .bubble-user {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 75%;
+  }
+
+  .clause {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--brass);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .clause-body {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  .clause-body p { margin: 0 0 12px; }
+  .clause-body p:last-child { margin-bottom: 0; }
+  .clause-body strong { font-weight: 600; }
+
+  .clause-body code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--brass-dim);
+    color: var(--ink);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .citation-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--citation);
+    font-weight: 500;
+  }
+
+  .sources {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line-strong);
+  }
+
+  .sources-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .source-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .source-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12.5px;
+  }
+
+  .source-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .source-type.legislation { background: rgba(139, 46, 46, 0.1); color: var(--citation); }
+  .source-type.tribunal { background: rgba(90, 107, 93, 0.12); color: var(--sage); }
+
+  .source-item a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-strong);
+    line-height: 1.4;
+  }
+
+  .source-item a:hover { border-bottom-color: var(--ink); }
+  .source-item a:focus-visible { outline: 2px solid var(--citation); outline-offset: 2px; }
+
+  .disclaimer-line {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--sage);
+    font-style: italic;
+  }
+
+  .thinking-clause {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--sage);
+    font-size: 13.5px;
+    font-style: italic;
+  }
+
+  .thinking-dots { display: inline-flex; gap: 4px; }
+  .thinking-dots span {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--brass);
+    animation: bob 1.2s ease-in-out infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bob {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-3px); opacity: 1; }
+  }
+
+  .error-clause { border-left-color: var(--citation); }
+  .error-clause .clause-body { color: var(--citation); }
+
+  .retry-btn {
+    margin-top: 10px;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    background: none;
+    border: 1px solid var(--citation);
+    color: var(--citation);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .retry-btn:hover { background: rgba(139, 46, 46, 0.06); }
+
+  .composer-region {
+    padding: 16px 24px 22px;
+    background: linear-gradient(to bottom, transparent, var(--paper) 30%);
+  }
+
+  .composer {
+    background: var(--paper-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 8px 8px 8px 16px;
+    transition: border-color 0.15s ease;
+  }
+
+  .composer:focus-within { border-color: var(--brass); }
+
+  .composer-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin: 0 0 6px 2px;
+  }
+
+  .composer textarea {
+    flex: 1;
+    border: none;
+    background: none;
+    resize: none;
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    padding: 8px 0;
+    max-height: 140px;
+    min-height: 24px;
+  }
+
+  .composer textarea:focus { outline: none; }
+  .composer textarea::placeholder { color: #A8A398; }
+
+  .send-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius);
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .send-btn:hover:not(:disabled) { background: #2A4232; }
+  .send-btn:active:not(:disabled) { transform: scale(0.94); }
+  .send-btn:disabled { background: var(--line-strong); cursor: not-allowed; }
+  .send-btn:focus-visible { outline: 2px solid var(--citation); outline-offset: 2px; }
+
+  .composer-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding: 0 2px;
+  }
+
+  .char-count { font-family: var(--mono); font-size: 10.5px; color: var(--sage); }
+  .char-count.near-limit { color: var(--citation); }
+  .scope-note { font-size: 10.5px; color: var(--sage); }
+
+  .scroll-region::-webkit-scrollbar { width: 8px; }
+  .scroll-region::-webkit-scrollbar-track { background: transparent; }
+  .scroll-region::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+  @media (max-width: 600px) {
+    .letterhead { padding: 14px 16px; }
+    .letterhead-text h1 { font-size: 15.5px; }
+    .letterhead-text p { font-size: 10.5px; }
+    .letterhead-status span:not(.status-dot) { display: none; }
+    .scroll-region { padding: 20px 14px 8px; }
+    .composer-region { padding: 12px 14px 16px; }
+    .bubble-user { max-width: 88%; }
+    .empty-state h2 { font-size: 21px; }
+    .prompt-chips { flex-direction: column; }
+    .prompt-chip { text-align: left; }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<header class="letterhead">
+  <div class="seal" aria-hidden="true">NZ</div>
+  <div class="letterhead-text">
+    <h1>Tribunal Law Assistant</h1>
+    <p>Tenancy Tribunal &amp; Residential Tenancies Act 1986</p>
+  </div>
+  <div class="letterhead-status">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Ready</span>
+  </div>
+</header>
+
+<main class="app">
+  <div class="scroll-region" id="scrollRegion" role="log" aria-live="polite" aria-label="Conversation">
+
+    <div class="empty-state" id="emptyState">
+      <div class="eyebrow">Grounded answers only</div>
+      <h2>Ask about a tenancy dispute, and get an answer sourced directly from official law.</h2>
+      <p>Every response is retrieved from the Tenancy Tribunal's published guidance and the Residential Tenancies Act 1986 — nothing else. This is not legal advice.</p>
+      <div class="prompt-chips" id="promptChips">
+        <button class="prompt-chip" type="button">What's the penalty for a landlord giving a retaliatory notice of termination?</button>
+        <button class="prompt-chip" type="button">How do I apply for a rehearing?</button>
+        <button class="prompt-chip" type="button">What counts as quiet enjoyment of a rental property?</button>
+      </div>
+    </div>
+
+    <div class="thread" id="thread"></div>
+  </div>
+
+  <div class="composer-region">
+    <div class="composer-eyebrow">Submit a question</div>
+    <div class="composer">
+      <textarea
+        id="questionInput"
+        rows="1"
+        maxlength="2000"
+        placeholder="e.g. Can my landlord enter without notice?"
+        aria-label="Your question about NZ tenancy law"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" type="button" aria-label="Send question">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 8h11M8 2.5L13.5 8 8 13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="composer-footer">
+      <span class="scope-note">Scope: Tenancy Tribunal &amp; the Residential Tenancies Act 1986 only</span>
+      <span class="char-count" id="charCount">0 / 2000</span>
+    </div>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const config = window.CHATBOT_CONFIG || { apiBaseUrl: "" };
+  const thread = document.getElementById("thread");
+  const scrollRegion = document.getElementById("scrollRegion");
+  const emptyState = document.getElementById("emptyState");
+  const input = document.getElementById("questionInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const charCount = document.getElementById("charCount");
+  const statusDot = document.getElementById("statusDot");
+  const statusText = document.getElementById("statusText");
+  const promptChips = document.getElementById("promptChips");
+
+  let isLoading = false;
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderAnswerHtml(text) {
+    const escaped = escapeHtml(text);
+    const withCitations = escaped.replace(
+      /\b(s\.?\s?\d+[A-Z]{0,2}(\(\d+[a-z]?\))?|Schedule\s?\d+[A-Z]{0,2}(\s?cl\.?\s?\d+)?)\b/g,
+      '<span class="citation-tag">$1</span>'
+    );
+    const paragraphs = withCitations
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (paragraphs.length === 0) return `<p>${withCitations}</p>`;
+    return paragraphs.map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+  }
+
+  function setStatus(state) {
+    statusDot.className = "status-dot";
+    if (state === "thinking") {
+      statusDot.classList.add("thinking");
+      statusText.textContent = "Researching…";
+    } else if (state === "offline") {
+      statusDot.classList.add("offline");
+      statusText.textContent = "Unavailable";
+    } else {
+      statusText.textContent = "Ready";
+    }
+  }
+
+  function scrollToBottom() {
+    scrollRegion.scrollTo({ top: scrollRegion.scrollHeight, behavior: "smooth" });
+  }
+
+  function hideEmptyState() {
+    if (emptyState) emptyState.style.display = "none";
+  }
+
+  function addUserMessage(text) {
+    hideEmptyState();
+    const msg = document.createElement("div");
+    msg.className = "msg msg-user";
+    msg.innerHTML = `
+      <div class="msg-label">You</div>
+      <div class="bubble-user">${escapeHtml(text)}</div>
+    `;
+    thread.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function addThinkingMessage() {
+    const msg = document.createElement("div");
+    msg.className = "msg msg-assistant";
+    msg.id = "thinkingMsg";
+    msg.innerHTML = `
+      <div class="msg-label">Tribunal Assistant</div>
+      <div class="clause">
+        <div class="thinking-clause">
+          Searching the Tenancy Tribunal and the Act
+          <span class="thinking-dots"><span></span><span></span><span></span></span>
+        </div>
+      </div>
+    `;
+    thread.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function removeThinkingMessage() {
+    const el = document.getElementById("thinkingMsg");
+    if (el) el.remove();
+  }
+
+  function sourceTypeLabel(type) {
+    return type === "legislation" ? "Act" : "Tribunal";
+  }
+
+  function addAssistantMessage(answer, sources) {
+    const msg = document.createElement("div");
+    msg.className = "msg msg-assistant";
+
+    let sourcesHtml = "";
+    if (sources && sources.length > 0) {
+      const items = sources
+        .map(
+          (s) => `
+          <li class="source-item">
+            <span class="source-type ${s.type === "legislation" ? "legislation" : "tribunal"}">${sourceTypeLabel(s.type)}</span>
+            <a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.title)}</a>
+          </li>`
+        )
+        .join("");
+      sourcesHtml = `
+        <div class="sources">
+          <span class="sources-label">Sources</span>
+          <ul class="source-list">${items}</ul>
+        </div>`;
+    }
+
+    msg.innerHTML = `
+      <div class="msg-label">Tribunal Assistant</div>
+      <div class="clause">
+        <div class="clause-body">${renderAnswerHtml(answer)}</div>
+        ${sourcesHtml}
+        <div class="disclaimer-line">Informational only — not legal advice.</div>
+      </div>
+    `;
+    thread.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function addErrorMessage(message, retryFn) {
+    const msg = document.createElement("div");
+    msg.className = "msg msg-assistant";
+    msg.innerHTML = `
+      <div class="msg-label">Tribunal Assistant</div>
+      <div class="clause error-clause">
+        <div class="clause-body">${escapeHtml(message)}</div>
+        <button class="retry-btn" type="button">Try again</button>
+      </div>
+    `;
+    msg.querySelector(".retry-btn").addEventListener("click", () => {
+      msg.remove();
+      retryFn();
+    });
+    thread.appendChild(msg);
+    scrollToBottom();
+  }
+
+  async function askQuestion(question) {
+    if (!config.apiBaseUrl) {
+      throw new Error(
+        "No backend configured. Set apiBaseUrl in config.js to your local dev server or Lambda Function URL."
+      );
+    }
+
+    const response = await fetch(`${config.apiBaseUrl}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, top_k: 5 }),
+    });
+
+    if (!response.ok) {
+      let detail = `Request failed (${response.status}).`;
+      try {
+        const body = await response.json();
+        if (body.error || body.detail) detail = body.error || body.detail;
+      } catch (_) {
+        /* response wasn't JSON */
+      }
+      throw new Error(detail);
+    }
+
+    return response.json();
+  }
+
+  async function handleSend() {
+    const question = input.value.trim();
+    if (!question || isLoading) return;
+
+    addUserMessage(question);
+    input.value = "";
+    autoResize();
+    updateCharCount();
+    setSendEnabled();
+
+    isLoading = true;
+    setStatus("thinking");
+    addThinkingMessage();
+
+    try {
+      const data = await askQuestion(question);
+      removeThinkingMessage();
+      addAssistantMessage(data.answer, data.sources || []);
+      setStatus("ready");
+    } catch (err) {
+      removeThinkingMessage();
+      setStatus("offline");
+      addErrorMessage(
+        err.message || "Something went wrong reaching the assistant.",
+        () => askAgain(question)
+      );
+    } finally {
+      isLoading = false;
+      setSendEnabled();
+    }
+  }
+
+  function askAgain(question) {
+    input.value = question;
+    handleSend();
+  }
+
+  function autoResize() {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 140) + "px";
+  }
+
+  function updateCharCount() {
+    const len = input.value.length;
+    charCount.textContent = `${len} / 2000`;
+    charCount.classList.toggle("near-limit", len > 1800);
+  }
+
+  function setSendEnabled() {
+    sendBtn.disabled = isLoading || input.value.trim().length === 0;
+  }
+
+  input.addEventListener("input", () => {
+    autoResize();
+    updateCharCount();
+    setSendEnabled();
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  sendBtn.addEventListener("click", handleSend);
+
+  promptChips.addEventListener("click", (e) => {
+    const chip = e.target.closest(".prompt-chip");
+    if (!chip) return;
+    input.value = chip.textContent;
+    autoResize();
+    updateCharCount();
+    setSendEnabled();
+    handleSend();
+  });
+
+  setSendEnabled();
+  setStatus("ready");
+})();
+</script>
+
+</body>
+</html>
