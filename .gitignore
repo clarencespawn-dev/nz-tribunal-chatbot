@@ -12,6 +12,12 @@ __pycache__/
 data/tribunal_data.json
 data/cleaned_data.json
 data/chunks.json
+data/chroma_db/
+
+# API keys — never commit these
+.env
+*.env
+
 
 # OS
 .DS_Store
